@@ -25,18 +25,21 @@ def save_token(token):
         json.dump(data, f)
 
 def refresh_access_token():
-    url = 'https://accounts.zoho.in/oauth/v2/token'
+    url = "https://accounts.zoho.com/oauth/v2/token"
     params = {
-        'refresh_token': ZOHO_REFRESH_TOKEN,
-        'client_id': ZOHO_CLIENT_ID,
-        'client_secret': ZOHO_CLIENT_SECRET,
-        'grant_type': 'refresh_token'
+        "refresh_token": ZOHO_REFRESH_TOKEN,
+        "client_id": ZOHO_CLIENT_ID,
+        "client_secret": ZOHO_CLIENT_SECRET,
+        "grant_type": "refresh_token"
     }
-    res = requests.post(url, params=params)
-    res.raise_for_status()
-    token = res.json()['access_token']
-    save_token(token)
-    return token
+    response = requests.post(url, data=params)
+    if response.status_code == 200:
+        token_data = response.json()
+        #save_access_token(token_data['access_token'], refresh_token, token_data['expires_in'])
+        save_token(token_data['access_token'])
+        print(token_data['access_token']);
+        return token_data['access_token']
+    return None      
 
 def get_access_token():
     token = get_stored_token()
