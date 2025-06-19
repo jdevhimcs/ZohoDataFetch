@@ -1,80 +1,164 @@
-# Zoho Sales Sync Project
+# 📊 ZohoDataFetch
 
-This project syncs **Sales Orders** and their **line items** from the Zoho CRM API to a Microsoft SQL Server database. It supports both fresh daily imports and incremental updates.
+A robust, extensible tool to **sync any Zoho CRM module** (e.g., Leads, Accounts, Sales Orders) into a **Microsoft SQL Server** database.
+
+Supports automatic table creation, token refresh, incremental syncs, and error handling — fully configurable and database-driven.
+
+---
+
+## 🚀 Features
+
+✅ **Zoho OAuth Token Management**
+
+* Refresh token automatically handled
+* Token info stored in DB (`ZohoAuth` table)
+* Transparent retry on token expiry
+  👉 [auth.py](https://github.com/jdevhimcs/ZohoDataFetch/blob/main/auth.py)
+
+---
+
+✅ **Dynamic Table Creation per Module**
+
+* Fetches Zoho module metadata via API
+* Automatically creates corresponding SQL Server table with proper data types
+  👉 [db\_handler.py](https://github.com/jdevhimcs/ZohoDataFetch/blob/main/db_handler.py)
+
+---
+
+✅ **Incremental Sync Based on Last Sync Time**
+
+* Syncs only new/updated records from last successful sync
+* Maintains sync log in `LastSync` table
+  👉 [db\_utils.py](https://github.com/jdevhimcs/ZohoDataFetch/blob/main/db_utils.py)
+
+---
+
+✅ **Modular and Reusable Structure**
+
+* Add support for any Zoho CRM module
+* Works across different tables/schemas
+* Central config for credentials and database connection
+
+---
+
+✅ **Clean Error Logging**
+
+* Logs failed insertions in a dedicated `InsertErrorLog` table
+* Helps in debugging and reprocessing
 
 ---
 
 ## 📁 Project Structure
 
 ```
-zoho_sales_sync/
-├── __main__.py                  # Main entry point to run data sync
-├── config.py                    # Contains API and DB credentials
-├── db_utils.py                  # DB connection & sync time functions
-├── auth.py                      # Zoho access token management
-├── zoho_api.py                  # Handles Zoho API communication
-├── sales_orders.py              # Sync logic for Sales Orders
-├── sales_order_items.py         # Sync logic for related line items
-├── utils.py                     # Helper utilities (e.g., date formatting)
-└── requirements.txt             # Python dependencies
+ZohoDataFetch/
+├── __main__.py            # Main entry point
+├── auth.py                # Token management
+├── config.py              # Zoho + DB credentials
+├── db_handler.py          # Table creation logic
+├── db_utils.py            # Last sync tracking
+├── global_data_save.py    # Common record insertion logic
+├── sync_modules.py        # Sync logic by module
+├── zoho_api.py            # API integration layer
+├── basic_query.sql        # Sample queries
+├── requirements.txt       # Dependencies
 ```
 
 ---
 
-## ⚙️ Setup Instructions
+## 🛠️ Setup Instructions
 
-### 1. Install Dependencies
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/jdevhimcs/ZohoDataFetch.git
+cd ZohoDataFetch
+```
+
+### 2. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment
+### 3. Configure
 
-Update `config.py` with your:
+Update `config.py` with:
 
-- Zoho API credentials
-- SQL Server connection details
+* Zoho API credentials (client ID, secret, refresh token)
+* SQL Server connection string
 
-### 3. Run the Sync
+Ensure you have the following tables in your DB:
+
+* `ZohoAuth` (for token)
+* `LastSync` (for last sync timestamps)
+* `InsertErrorLog` (for error records)
+
+---
+
+## 📦 How to Use
+
+### ⏯️ Full Sync
+
+Run the full sync from the main file:
 
 ```bash
-python -m zoho_sales_sync
+python __main__.py
 ```
 
-By default, it runs the **daily sync** of newly created Sales Orders.
+### 🔁 Add New Module
 
-To run **incremental sync** (e.g., modified in last 1 hour), change the `main()` function in `__main__.py` to call:
+To sync a new module (e.g., Contacts, Invoices):
 
-```python
-from sales_orders import fetch_incremental_data
-fetch_incremental_data(ZOHO_MODULE)
-```
+1. Add module name to the sync logic
+2. The system:
 
----
-
-## 🛠 Features
-
-- Auto-refresh Zoho access token
-- Pull paginated data from Zoho CRM
-- Insert/Update records in MS SQL Server
-- Flatten nested JSON from Zoho API
-- Line item sync via separate endpoint
+   * Fetches module metadata
+   * Creates SQL table
+   * Pulls records since last sync
+   * Inserts/updates DB
 
 ---
 
-## 🔐 Note
+## 📌 Best Practices
 
-Ensure your SQL Server schema has the necessary tables:
-
-- `ZohoIntl.Sales_Orders`
-- `ZohoIntl.Sales_Ordered_Items`
-- `ZohoIntl.LastSync`
-- `ZohoIntl.ZohoAuth`
-- `ZohoIntl.InsertErrorLog`
+* Use a scheduler (e.g., Windows Task Scheduler / cron) to automate daily/hourly sync
+* Backup your DB regularly
+* Monitor `InsertErrorLog` for failed records
+* Avoid unnecessary full syncs on large modules
 
 ---
 
-## 📄 License
+## 🧩 Example Modules You Can Sync
 
-Internal project for EC-Council integration. No external distribution permitted.
+* Leads
+* Accounts
+* Contacts
+* Sales Orders
+* Invoices
+* Deals
+
+> Add any module with just one line — no schema hardcoding needed.
+
+---
+
+## 🛡️ Security Notes
+
+* Do not commit real API keys or refresh tokens
+* Use `.env` for secrets (can be added in a future enhancement)
+* Ensure the database has proper access control
+
+---
+
+## 🧠 Contributions
+
+Want to extend this for another CRM or DB?
+PRs are welcome! Please follow the modular structure.
+
+---
+
+## 📬 Contact
+
+Maintainer: [Gaurav Pandey](mailto:jdevhimcs@gmail.com)
+
+
